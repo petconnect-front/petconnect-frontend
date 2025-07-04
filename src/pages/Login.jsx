@@ -1,23 +1,25 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext'; // ✅ nuevo
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth(); // ✅ accedemos al login del contexto
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await axios.post('http://localhost:3000/api/auth/login', {
+      const res = await axios.post('http://localhost:4000/public/auth/login', {
         email,
         password
       });
 
-      localStorage.setItem('token', res.data.token);
+      login(res.data.token); // ✅ guarda token y decodifica usuario
       navigate('/feed');
     } catch (err) {
       console.error(err);

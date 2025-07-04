@@ -1,28 +1,38 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import jwt_decode from 'jwt-decode';
+import { AuthContext } from '../context/AuthContext';
+import API from '../api/axios';
 
 function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('user'); // user o shelter
-  const navigate = useNavigate();
   const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const { setUser } = useContext(AuthContext);
 
   const handleRegister = async (e) => {
     e.preventDefault();
 
     try {
-      await axios.post('http://localhost:3000/api/auth/register', {
+      const res = await API.post('/auth/register', {
         email,
         password,
-        role
+        role,
       });
 
-      navigate('/');
+      const { token } = res.data;
+
+      // Guardar token y usuario
+      localStorage.setItem('token', token);
+      const decodedUser = jwt_decode(token);
+      setUser(decodedUser);
+
+      navigate('/feed');
     } catch (err) {
       console.error(err);
-      setError('Error al registrarse');
+      setError(err.response?.data?.message || 'Error al registrarse');
     }
   };
 
@@ -32,6 +42,7 @@ function Register() {
         <h2 className="text-2xl font-bold text-center mb-6 text-dark">Registrarse</h2>
         <form onSubmit={handleRegister} className="flex flex-col gap-4">
           {error && <p className="text-red-500">{error}</p>}
+
           <input
             type="email"
             placeholder="Correo electrónico"
@@ -40,6 +51,7 @@ function Register() {
             className="p-3 border border-gray-300 rounded"
             required
           />
+
           <input
             type="password"
             placeholder="Contraseña"
@@ -48,6 +60,7 @@ function Register() {
             className="p-3 border border-gray-300 rounded"
             required
           />
+
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
@@ -56,6 +69,7 @@ function Register() {
             <option value="user">Usuario</option>
             <option value="shelter">Refugio</option>
           </select>
+
           <button
             type="submit"
             className="bg-primary text-white py-2 rounded hover:bg-green-600"
@@ -63,6 +77,7 @@ function Register() {
             Registrarse
           </button>
         </form>
+
         <p className="text-center mt-4 text-sm">
           ¿Ya tienes cuenta?{' '}
           <Link to="/" className="text-primary font-medium hover:underline">

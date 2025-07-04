@@ -1,46 +1,67 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from '../components/common/Navbar';
 import PostCard from '../components/feed/PostCard';
+import { getAllPosts, createPost } from '../api/postApi';
+import { uploadImage } from '../api/mediaApi';
+import { useAuth } from '../context/AuthContext'; // 👈 importar contexto
 
 function Feed() {
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      petName: 'Luna',
-      image: 'https://placekitten.com/400/300',
-      description: 'Luna es una gatita juguetona que busca hogar 🐾',
-    },
-    {
-      id: 2,
-      petName: 'Rocky',
-      image: 'https://place-puppy.com/400x300',
-      description: 'Rocky ama correr y dar abrazos 🐶💚',
-    },
-  ]);
-
+  const [posts, setPosts] = useState([]);
   const [formData, setFormData] = useState({
     petName: '',
-    image: '',
+    imageFile: null,
     description: '',
   });
 
-  const currentUser = {
-    id: 'user123',
-    name: 'Diego'
-  };
+  const { user } = useAuth(); // 👈 obtener usuario autenticado
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newPost = {
-      id: Date.now(),
-      ...formData,
+  // 🔁 Cargar posts al iniciar
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const data = await getAllPosts();
+        setPosts(data);
+      } catch (err) {
+        console.error('Error al obtener publicaciones:', err.message);
+      }
     };
-    setPosts([newPost, ...posts]);
-    setFormData({ petName: '', image: '', description: '' });
+
+    fetchPosts();
+  }, []);
+
+  // 📝 Manejar cambios del formulario
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+
+    if (name === 'imageFile') {
+      setFormData({ ...formData, imageFile: files[0] });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  // 📤 Publicar nueva mascota
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const imageUrl = await uploadImage(formData.imageFile);
+
+      const newPost = {
+        petName: formData.petName,
+        image: imageUrl,
+        description: formData.description,
+        userId: user?.id,
+        author: user?.name || 'Usuario anónimo',
+      };
+
+      const created = await createPost(newPost);
+      setPosts([created, ...posts]);
+
+      setFormData({ petName: '', imageFile: null, description: '' });
+    } catch (err) {
+      console.error('Error al publicar:', err.message);
+    }
   };
 
   return (
@@ -51,7 +72,10 @@ function Feed() {
           onSubmit={handleSubmit}
           className="bg-white rounded-xl shadow-md p-6 mb-6 flex flex-col gap-4"
         >
-          <h3 className="text-xl font-semibold text-dark text-center">Publicar nueva mascota 🐾</h3>
+          <h3 className="text-xl font-semibold text-dark text-center">
+            Publicar nueva mascota 🐾
+          </h3>
+
           <input
             type="text"
             name="petName"
@@ -61,15 +85,16 @@ function Feed() {
             required
             className="p-3 border border-gray-300 rounded"
           />
+
           <input
-            type="text"
-            name="image"
-            placeholder="URL de imagen"
-            value={formData.image}
+            type="file"
+            name="imageFile"
+            accept="image/*"
             onChange={handleChange}
             required
             className="p-3 border border-gray-300 rounded"
           />
+
           <textarea
             name="description"
             placeholder="Descripción"
@@ -78,6 +103,7 @@ function Feed() {
             required
             className="p-3 border border-gray-300 rounded resize-none"
           />
+
           <button
             type="submit"
             className="bg-green-600 text-white py-2 rounded hover:bg-green-700"
@@ -86,9 +112,13 @@ function Feed() {
           </button>
         </form>
 
-        {posts.map((post) => (
-          <PostCard key={post.id} data={post} currentUser={currentUser} />
-        ))}
+        {posts.length === 0 ? (
+          <p className="text-center text-gray-600">No hay publicaciones aún.</p>
+        ) : (
+          posts.map((post) => (
+            <PostCard key={post.id} data={post} currentUser={user} />
+          ))
+        )}
       </div>
     </div>
   );
