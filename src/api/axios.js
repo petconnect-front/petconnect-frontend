@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:4000/api',
+  baseURL: 'http://api-gateway-service:4000/api', // dentro de docker
+  withCredentials: false,
 });
 
 // Añadir token a cada request si existe
