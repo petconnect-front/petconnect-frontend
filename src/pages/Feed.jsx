@@ -3,7 +3,8 @@ import Navbar from '../components/common/Navbar';
 import PostCard from '../components/feed/PostCard';
 import { getAllPosts, createPost } from '../api/postApi';
 import { uploadImage } from '../api/mediaApi';
-import { useAuth } from '../context/AuthContext'; // 👈 importar contexto
+import { useAuth } from '../context/useAuth'; // ✅
+
 
 function Feed() {
   const [posts, setPosts] = useState([]);

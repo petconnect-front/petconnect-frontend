@@ -1,15 +1,16 @@
+// src/context/AuthProvider.jsx
 import { useState, useEffect } from 'react';
-import jwt_decode from 'jwt-decode';
-import { AuthContext } from './AuthContext.js';
+import { jwtDecode } from 'jwt-decode'; // ✅ CORRECTO
+import { AuthContext } from './AuthContext';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  const loadUserFromToken = () => {
+  useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        const decoded = jwt_decode(token);
+        const decoded = jwtDecode(token);
         setUser(decoded);
       } catch (err) {
         console.error('Error al decodificar el token:', err);
@@ -18,12 +19,6 @@ export const AuthProvider = ({ children }) => {
     } else {
       setUser(null);
     }
-  };
-
-  useEffect(() => {
-    loadUserFromToken();
-    window.addEventListener('storage', loadUserFromToken);
-    return () => window.removeEventListener('storage', loadUserFromToken);
   }, []);
 
   return (

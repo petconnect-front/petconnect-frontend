@@ -4,7 +4,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Feed from './pages/Feed';
 import Home from './pages/Home';
-import { AuthProvider, useAuth } from './context/useAuth';
+import { AuthProvider } from './context/AuthProvider';
+import { useAuth } from './context/useAuth';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();

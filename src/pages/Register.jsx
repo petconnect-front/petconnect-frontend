@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import jwt_decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode'; // ✅
+
 import { AuthContext } from '../context/AuthContext';
 import API from '../api/axios';
 
@@ -26,7 +27,7 @@ function Register() {
 
       // Guardar token y usuario
       localStorage.setItem('token', token);
-      const decodedUser = jwt_decode(token);
+      const decodedUser = jwtDecode(token);
       setUser(decodedUser);
 
       navigate('/feed');
