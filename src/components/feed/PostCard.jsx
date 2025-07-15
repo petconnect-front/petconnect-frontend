@@ -3,59 +3,73 @@ import { getCommentsByPost, createComment } from '../../api/commentApi';
 
 function PostCard({ data, currentUser }) {
   const [reactions, setReactions] = useState({
-    love: [],
+    love: [], // aquí se podrían guardar IDs o nombres para mostrar mejor
     cute: [],
   });
 
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [error, setError] = useState('');
 
-  // ✅ Obtener comentarios desde el backend
   useEffect(() => {
     const fetchComments = async () => {
+      setLoadingComments(true);
       try {
         const dataComments = await getCommentsByPost(data.id);
         setComments(dataComments);
       } catch (err) {
         console.error('Error al obtener comentarios:', err);
+        setError('No se pudieron cargar los comentarios.');
+      } finally {
+        setLoadingComments(false);
       }
     };
-
     fetchComments();
   }, [data.id]);
 
-  // ✅ Añadir comentario
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
+    if (!currentUser || !currentUser.id) {
+      setError('Debes iniciar sesión para comentar.');
+      return;
+    }
+
     const comment = {
       userId: currentUser.id,
-      userName: currentUser.name,
-      content: newComment,
+      userName: currentUser.name || currentUser.email || 'Usuario',
+      content: newComment.trim(),
     };
 
     try {
       const created = await createComment(data.id, comment);
       setComments([created, ...comments]);
       setNewComment('');
+      setError('');
     } catch (err) {
       console.error('Error al comentar:', err);
+      setError('No se pudo publicar el comentario.');
     }
   };
 
   const toggleReaction = (type) => {
+    if (!currentUser || !currentUser.id) {
+      setError('Debes iniciar sesión para reaccionar.');
+      return;
+    }
     const userId = currentUser.id;
     const alreadyReacted = reactions[type].includes(userId);
-
     const updated = {
       ...reactions,
       [type]: alreadyReacted
         ? reactions[type].filter((id) => id !== userId)
         : [...reactions[type], userId],
     };
-
     setReactions(updated);
+
+    // Aquí idealmente enviar la reacción al backend para guardar estado real
   };
 
   return (
@@ -101,10 +115,11 @@ function PostCard({ data, currentUser }) {
           <button
             onClick={() => toggleReaction('love')}
             className={`text-2xl ${
-              reactions.love.includes(currentUser.id)
+              reactions.love.includes(currentUser?.id)
                 ? 'text-red-500'
                 : 'text-gray-400'
             }`}
+            aria-label="Reacción amor animal"
           >
             🐶
           </button>
@@ -115,10 +130,11 @@ function PostCard({ data, currentUser }) {
           <button
             onClick={() => toggleReaction('cute')}
             className={`text-2xl ${
-              reactions.cute.includes(currentUser.id)
+              reactions.cute.includes(currentUser?.id)
                 ? 'text-pink-500'
                 : 'text-gray-400'
             }`}
+            aria-label="Reacción ternura"
           >
             🥹
           </button>
@@ -130,11 +146,14 @@ function PostCard({ data, currentUser }) {
         {/* Detalle de reacciones */}
         <div className="mt-1 text-xs text-gray-500">
           ❤️ Reaccionaron:{' '}
-          {reactions.love.concat(reactions.cute).join(', ') || 'Nadie aún'}
+          {reactions.love.length + reactions.cute.length > 0
+            ? `${reactions.love.length + reactions.cute.length} persona(s)`
+            : 'Nadie aún'}
         </div>
 
         {/* Comentarios */}
         <div className="mt-6">
+          {error && <p className="text-red-500 mb-2">{error}</p>}
           <form onSubmit={handleAddComment} className="flex flex-col gap-2">
             <input
               type="text"
@@ -151,17 +170,23 @@ function PostCard({ data, currentUser }) {
             </button>
           </form>
 
-          <div className="mt-4 space-y-3">
-            {comments.map((comment) => (
-              <div key={comment.id} className="border-t pt-2 text-sm">
-                <p className="font-medium text-dark">{comment.userName}</p>
-                <p>{comment.content}</p>
-                <p className="text-xs text-gray-400">
-                  {new Date(comment.createdAt).toLocaleString()}
-                </p>
-              </div>
-            ))}
-          </div>
+          {loadingComments ? (
+            <p className="text-center text-gray-600 mt-4">Cargando comentarios...</p>
+          ) : comments.length === 0 ? (
+            <p className="text-center text-gray-600 mt-4">No hay comentarios aún.</p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {comments.map((comment) => (
+                <div key={comment.id} className="border-t pt-2 text-sm">
+                  <p className="font-medium text-dark">{comment.userName}</p>
+                  <p>{comment.content}</p>
+                  <p className="text-xs text-gray-400">
+                    {new Date(comment.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

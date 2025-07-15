@@ -1,14 +1,18 @@
 // src/components/common/Navbar.jsx
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth';
 
 function Navbar() {
-  const { user, setUser } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
+  // Ocultar navbar en rutas públicas específicas
+  const hiddenRoutes = ['/login', '/register'];
+  if (hiddenRoutes.includes(location.pathname)) return null;
+
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
@@ -21,15 +25,13 @@ function Navbar() {
       <div className="flex items-center gap-4">
         {user ? (
           <>
-            {user.avatar && (
-              <img
-                src={user.avatar}
-                alt="avatar"
-                className="w-8 h-8 rounded-full object-cover border"
-              />
-            )}
+            <img
+              src={user.avatar || '/default-avatar.png'}
+              alt="avatar"
+              className="w-8 h-8 rounded-full object-cover border"
+            />
             <span className="text-gray-700 font-medium">
-              Hola, {user.name || user.email || 'Usuario'}
+              Hola, {user.fullName || user.email || 'Usuario'}
             </span>
             <button
               onClick={handleLogout}

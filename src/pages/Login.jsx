@@ -1,30 +1,27 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '../context/useAuth'; // ✅
+import { useAuth } from '../context/useAuth';
 
-
-function Login() {
+const Login = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
-  const { login } = useAuth(); // ✅ accedemos al login del contexto
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
 
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/auth/login`, {
-        email,
-        password
-      });
-
-      login(res.data.token); // ✅ guarda token y decodifica usuario
-      navigate('/feed');
+      await login(email, password);
+      navigate('/feed'); // redirige al home privado tras login
     } catch (err) {
-      console.error(err);
-      setError('Credenciales inválidas');
+      const errorMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        '❌ Error al iniciar sesión';
+      setError(errorMsg);
     }
   };
 
@@ -32,8 +29,8 @@ function Login() {
     <div className="flex items-center justify-center h-screen bg-gray-100">
       <div className="w-full max-w-md bg-white rounded-xl shadow-md p-8">
         <h2 className="text-2xl font-bold text-center mb-6 text-dark">Iniciar sesión</h2>
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
-          {error && <p className="text-red-500">{error}</p>}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && <p className="text-red-500 text-center">{error}</p>}
           <input
             type="email"
             placeholder="Correo electrónico"
@@ -66,6 +63,6 @@ function Login() {
       </div>
     </div>
   );
-}
+};
 
 export default Login;

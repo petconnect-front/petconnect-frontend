@@ -1,31 +1,24 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Login from '../pages/Login';
-import Register from '../pages/Register';
-import Feed from '../pages/Feed';
-import Profile from '../pages/Profile';
-import PetProfile from '../pages/PetProfile';
-import Chat from '../pages/Chat';
-import Shelter from '../pages/Shelter';
-import Pet from '../pages/Pet';
-import Admin from '../pages/Admin';
-
+import { Routes, Route } from 'react-router-dom';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Feed from './pages/Feed'; // ejemplo
+import PrivateRoute from './routes/PrivateRoute';
 
 function AppRoutes() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/feed" element={<Feed />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/pet" element={<PetProfile />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/shelter" element={<Shelter />} />
-        <Route path="/pet" element={<Pet />} />
-        <Route path="/admin" element={<Admin />} />
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
-      </Routes>
-    </BrowserRouter>
+      {/* Ruta protegida */}
+      <Route element={<PrivateRoute />}>
+        <Route path="/feed" element={<Feed />} />
+        {/* Puedes incluir más rutas privadas aquí */}
+      </Route>
+
+      {/* Ruta pública por defecto */}
+      <Route path="*" element={<Login />} />
+    </Routes>
   );
 }
 

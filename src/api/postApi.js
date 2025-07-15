@@ -1,16 +1,14 @@
 // src/api/postApi.js
-import API from './axios';
+import { postAPI } from './axiosClients'; // importar la instancia ya creada
 
-const BASE_URL = 'http://localhost:4000/api/posts';
-
-// ✅ Obtener todos los posts
+// 🔁 Obtener todas las publicaciones
 export const getAllPosts = async () => {
-  const res = await API.get(BASE_URL);
+  const res = await postAPI.get('/'); // baseURL ya tiene /api/v1/posts
   return res.data;
 };
 
-// ✅ Crear un nuevo post
+// 📝 Crear una nueva publicación
 export const createPost = async (postData) => {
-  const res = await API.post(BASE_URL, postData);
+  const res = await postAPI.post('/', postData);
   return res.data;
 };
