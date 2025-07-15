@@ -1,28 +1,54 @@
-// src/context/AuthProvider.jsx
-import { useState, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode'; // ✅ CORRECTO
-import { AuthContext } from './AuthContext';
+import { createContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../api/axiosClients';
+
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // Verifica si hay token válido al cargar la app
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setUser(decoded);
-      } catch (err) {
-        console.error('Error al decodificar el token:', err);
-        setUser(null);
-      }
+      authAPI.get('/profile')
+        .then((res) => {
+          setUser(res.data);
+        })
+        .catch(() => {
+          localStorage.removeItem('token');
+          setUser(null);
+        })
+        .finally(() => setLoading(false));
     } else {
-      setUser(null);
+      setLoading(false);
     }
   }, []);
 
+  // Función para hacer login
+  const login = async (email, password) => {
+    const res = await authAPI.post('/login', { email, password });
+    localStorage.setItem('token', res.data.token);
+    setUser(res.data.user);
+    return res;
+  };
+
+  // Función para hacer logout
+  const logout = async () => {
+    try {
+      await authAPI.post('/logout');
+    } catch (err) {
+      console.warn('Logout failed:', err.message);
+    }
+    localStorage.removeItem('token');
+    setUser(null);
+    navigate('/login');
+  };
+
   return (
-    <AuthContext.Provider value={{ user, setUser }}>
+    <AuthContext.Provider value={{ user, setUser, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

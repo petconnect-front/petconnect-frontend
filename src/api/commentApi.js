@@ -1,19 +1,17 @@
 // src/api/commentApi.js
-import API from './axios';
-
-const BASE_URL = '/api/comments'; // Ruta desde el API Gateway
+import { commentAPI } from './axiosClients'; // instancia desde axiosClients.js
 
 // Obtener comentarios de un post específico
 export const getCommentsByPost = async (postId) => {
-  const res = await API.get(`${BASE_URL}?postId=${postId}`);
+  const res = await commentAPI.get(`/?postId=${postId}`);
   return res.data;
 };
 
 // Crear un nuevo comentario
 export const createComment = async (postId, commentData) => {
-  const res = await API.post(BASE_URL, {
+  const res = await commentAPI.post('/', {
     postId,
-    ...commentData
+    ...commentData,
   });
   return res.data;
 };
